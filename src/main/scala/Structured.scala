@@ -1,3 +1,5 @@
+import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 
 object Structured extends SparkSession {
   def main(args: Array[String]): Unit = {
@@ -5,6 +7,12 @@ object Structured extends SparkSession {
     val spark = buildSparkSession
 
     import spark.implicits._
+
+    val schema = new StructType()
+      .add(StructField("unix_time", StringType, false))
+      .add(StructField("category_id", StringType, false))
+      .add(StructField("ip", StringType, false))
+      .add(StructField("type", StringType, false))
 
     val df = spark
       .readStream
@@ -15,14 +23,26 @@ object Structured extends SparkSession {
       .load()
       .selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
       .as[(String, String)]
-      .select("value")
+      .select(from_json(col("value"), schema) as "data")
+      .select("data.unix_time","data.category_id","data.ip","data.type")
+      .toDF("time","category","ip","type")
 
-    val query = df.writeStream
-      .format("org.apache.spark.sql.cassandra")
-      .outputMode("update")
-      .foreach(new CassandraSink)
+    df.printSchema()
+
+    val cons = df.writeStream
+      .format("console")
+      .outputMode("append")
       .start()
 
-    query.awaitTermination()
+    cons.awaitTermination()
+
+
+//    val cassandra = df.writeStream
+//      .format("org.apache.spark.sql.cassandra")
+//      .outputMode("update")
+//      .foreach(new CassandraSink)
+//      .start()
+//
+//    cassandra.awaitTermination()
   }
 }
