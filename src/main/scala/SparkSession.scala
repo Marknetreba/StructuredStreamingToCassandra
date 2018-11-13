@@ -6,7 +6,7 @@ class SparkSession extends Serializable {
   def buildSparkSession = {
 
     @transient lazy val conf: SparkConf = new SparkConf()
-      .setAppName("Structured Streaming")
+      .setAppName("StopBot")
       .set("spark.cassandra.connection.host", "localhost")
       //.set("spark.sql.streaming.checkpointLocation", "checkpoint")
 
