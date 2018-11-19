@@ -7,5 +7,5 @@ class CassandraDriver extends SparkSession {
   val connector = CassandraConnector(spark.sparkContext.getConf)
 
   val namespace = "test"
-  val foreachTableSink = "data"
+  val foreachTableSink = "dataframe"
 }
