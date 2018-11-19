@@ -42,26 +42,26 @@ object Structured extends SparkSession {
       .withColumn("duration_minutes",from_unixtime(unix_timestamp(col("time_end")).minus(unix_timestamp(col("time_start"))),"mm"))
       .withColumn("event_rate",col("requests").divide(col("duration_minutes")))
       .withColumn("categories_rate",col("distinct_categories").divide(col("duration_minutes")))
-      .withColumn("views_clicks",col("views").divide(col("clicks")))
-      .withColumn("bot", when(col("views_clicks")>0.3 and col("categories_rate")>0.5 and col("event_rate")>100,"yes").otherwise("no"))
+      .withColumn("views_clicks", when(col("views")>0, col("clicks").divide(col("views"))).otherwise(col("clicks")))
+      .withColumn("bot", when(col("views_clicks")>3 or col("categories_rate")>0.5 or col("event_rate")>100,"yes").otherwise("no"))
       .select("ip","bot","duration_minutes","distinct_categories","event_rate","categories_rate","views_clicks")
 
     //Console output
-    val cons = df.writeStream
-      .format("console")
-      .outputMode("complete")
-      .start()
-
-    cons.awaitTermination()
+//    val cons = df.writeStream
+//      .format("console")
+//      .outputMode("complete")
+//      .start()
+//
+//    cons.awaitTermination()
 
 
     //Cassandra output
-//    val cassandra = df.writeStream
-//      .format("org.apache.spark.sql.cassandra")
-//      .outputMode("update")
-//      .foreach(new CassandraSink)
-//      .start()
-//
-//    cassandra.awaitTermination()
+    val cassandra = df.writeStream
+      .format("org.apache.spark.sql.cassandra")
+      .outputMode("update")
+      .foreach(new CassandraSink)
+      .start()
+
+    cassandra.awaitTermination()
   }
 }
