@@ -4,30 +4,71 @@ import org.scalatest.FunSuite
 
 class Test extends FunSuite with DataFrameSuiteBase {
 
-  test("Testing count of bots in streaming data") {
+  test("Categories rate more than 5 categories in 10") {
 
-    val df = spark.read
-      .json("/Users/mnetreba/Downloads/data.json")
-      .na.drop()
-      .toDF("category","ip","type","time")
-      .groupBy("ip")
-      .agg(min(from_unixtime(col("time"),"yyyy-MM-dd HH:mm:ss")) as "time_start",
-        max(from_unixtime(col("time"),"yyyy-MM-dd HH:mm:ss")) as "time_end",
-        collect_set("category") as "categories",
-        count(when(col("type")==="click", 1)) as "clicks",
-        count(when(col("type")==="view", 1)) as "views",
-        count("type") as "requests")
-      .withColumn("distinct_categories",size(col("categories")))
-      .withColumn("duration_minutes",from_unixtime(unix_timestamp(col("time_end")).minus(unix_timestamp(col("time_start"))),"mm"))
-      .withColumn("event_rate",col("requests").divide(col("duration_minutes")))
-      .withColumn("categories_rate",col("distinct_categories").divide(col("duration_minutes")))
-      .withColumn("views_clicks", when(col("views")>0, col("clicks").divide(col("views"))).otherwise(col("clicks")))
-      .withColumn("bot", when(col("views_clicks")>3 or col("categories_rate")>0.5 or col("event_rate")>100,"yes").otherwise("no"))
-      .select("ip","bot","duration_minutes","distinct_categories","event_rate","categories_rate","views_clicks")
+    // Unix timestamp conversion
+    // 1543666200 ->  12/01/2018 12:10pm
+    // 1543666500 ->  12/01/2018 12:15pm
+
+    val data = Seq(("1543666200", "1000", "172.10.0.0", "view"),
+                    ("1543666500", "1001", "172.10.0.0", "view"),
+                    ("1543666500", "1002", "172.10.0.0", "view"),
+                    ("1543666500", "1003", "172.10.0.0", "click"),
+                    ("1543666500", "1004", "172.10.0.0", "click"),
+
+                    ("1543666200", "1000", "172.20.0.0", "view"),
+                    ("1543666500", "1000", "172.20.0.0", "click"))
+
+    val df = DF.analyze(data)
+
+    println("CATEGORIES RATE")
+
+    df.show()
 
     val bots = df.select(col("*")).where("bot == 'yes'")
 
-    bots.show()
+    assert(bots.count(), 1)
+  }
+
+  test("Clicks/views more than 3") {
+
+    val data = Seq(("1543666200", "1000", "172.10.0.0", "view"),
+                    ("1543666200", "1000", "172.10.0.0", "click"),
+                    ("1543666500", "1000", "172.10.0.0", "click"),
+                    ("1543666500", "1001", "172.10.0.0", "click"),
+                    ("1543666500", "1001", "172.10.0.0", "click"),
+
+                    ("1543666200", "1000", "172.20.0.0", "view"),
+                    ("1543666500", "1000", "172.20.0.0", "click"))
+
+    val df = DF.analyze(data)
+
+    println("CLICKS/VIEWS")
+
+    df.show()
+
+    val bots = df.select(col("*")).where("bot == 'yes'")
+
+    assert(bots.count(), 1)
+
+  }
+
+  test("Event rate more than 1000 requests in 10 minutes") {
+
+    val events = for (i <- 1 to 500) yield ("1543666200", "1000", "172.10.0.0", "view")
+
+    val data = Seq(("1543666500", "1000", "172.10.0.0", "click"),
+
+                    ("1543666200", "1000", "172.20.0.0", "view"),
+                    ("1543666500", "1000", "172.20.0.0", "click")).++(events)
+
+    val df = DF.analyze(data)
+
+    println("EVENT RATE")
+
+    df.show()
+
+    val bots = df.select(col("*")).where("bot == 'yes'")
 
     assert(bots.count(), 1)
   }

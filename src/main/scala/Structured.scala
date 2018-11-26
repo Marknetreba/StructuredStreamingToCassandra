@@ -47,21 +47,21 @@ object Structured extends SparkSession {
       .select("ip","bot","duration_minutes","distinct_categories","event_rate","categories_rate","views_clicks")
 
     //Console output
-//    val cons = df.writeStream
-//      .format("console")
-//      .outputMode("complete")
-//      .start()
-//
-//    cons.awaitTermination()
+    val cons = df.writeStream
+      .format("console")
+      .outputMode("complete")
+      .start()
+
+    cons.awaitTermination()
 
 
     //Cassandra output
-    val cassandra = df.writeStream
-      .format("org.apache.spark.sql.cassandra")
-      .outputMode("update")
-      .foreach(new CassandraSink)
-      .start()
-
-    cassandra.awaitTermination()
+    //    val cassandra = df.writeStream
+    //      .format("org.apache.spark.sql.cassandra")
+    //      .outputMode("update")
+    //      .foreach(new CassandraSink)
+    //      .start()
+    //
+    //    cassandra.awaitTermination()
   }
 }
