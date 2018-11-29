@@ -13,8 +13,8 @@ object DF {
     val df =data
       .toDF("time", "category", "ip", "type")
       .groupBy("ip")
-      .agg(min(from_unixtime(col("time"), "yyyy-MM-dd HH:mm:ss")) as "time_start",
-        max(from_unixtime(col("time"), "yyyy-MM-dd HH:mm:ss")) as "time_end",
+      .agg(min(col("time")) as "time_start",
+        max(col("time")) as "time_end",
         collect_set("category") as "categories",
         collect_list("type") as "types",
         count(when(col("type") === "click", 1)) as "clicks",
