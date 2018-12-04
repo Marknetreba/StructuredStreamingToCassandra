@@ -1,4 +1,4 @@
-import org.apache.spark.{SparkConf, sql}
+import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 
 class SparkSession extends Serializable {
@@ -8,7 +8,6 @@ class SparkSession extends Serializable {
     @transient lazy val conf: SparkConf = new SparkConf()
       .setAppName("StopBot")
       .set("spark.cassandra.connection.host", "localhost")
-      //.set("spark.sql.streaming.checkpointLocation", "checkpoint")
 
     @transient lazy val spark = SparkSession
       .builder()

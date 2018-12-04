@@ -1,17 +1,11 @@
-import Structured.buildSparkSession
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 
-object DF {
+object DFAnalyze {
 
-  def analyze(data: Seq[(String, String, String, String)]): DataFrame = {
+  def analyze(data: DataFrame): DataFrame = {
 
-    val spark = buildSparkSession
-
-    import spark.implicits._
-
-    val df =data
-      .toDF("time", "category", "ip", "type")
+    val df = data
       .groupBy("ip")
       .agg(min(col("time")) as "time_start",
         max(col("time")) as "time_end",
